@@ -1,6 +1,6 @@
 {
 	"name": "Composer",
-	"id": "{{Your Figma plugin ID}}",
+	"id": "1010867408833823226",
 	"api": "1.0.0",
 	"main": "dist/code.js",
 	"ui": "dist/ui.html"
