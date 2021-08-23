@@ -8,9 +8,8 @@
       :placeholder="placeholder"
       :spinning="spinning"
       :border="border"
-      @input="$emit('input', $event.target.value)"
-      @change="$emit('change', $event.target.value)"
-      :id="uniqueId"
+      @input="$emit('input', $event)"
+      @change="$emit('change', $event)"
     />
     <Button @click="btnPress">{{ btnLabel }}</Button>
   </div>
