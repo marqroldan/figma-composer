@@ -18,6 +18,7 @@ figma.ui.onmessage = async msg => {
             } else if (msg.action === 'get') {
                 figma.clientStorage.getAsync('APIKey').then(sendAPIKey);
             }
+            break;
         }
         case 'create-rectangles': {
             const nodes: SceneNode[] = [];
