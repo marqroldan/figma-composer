@@ -3,9 +3,14 @@
     <Label v-if="label">{{ label }}</Label>
     <Input
       icon="key"
-      v-bind:placeholder="placeholder"
-      v-model="inputValue"
-      @input="$emit('input', $event)"
+      :value="value"
+      :disabled="disabled"
+      :placeholder="placeholder"
+      :spinning="spinning"
+      :border="border"
+      @input="$emit('input', $event.target.value)"
+      @change="$emit('change', $event.target.value)"
+      :id="uniqueId"
     />
     <Button @click="btnPress">{{ btnLabel }}</Button>
   </div>
@@ -23,20 +28,22 @@ export default {
   props: {
     label: String,
     btnLabel: String,
-    placeholder: String,
     onButtonPress: Function,
+
+    icon: { type: String, default: undefined },
+    iconText: { type: String, default: undefined },
+    value: { type: String | Number, default: undefined },
+    placeholder: { type: String, default: undefined },
+    disabled: Boolean,
+    border: Boolean,
+    spinning: Boolean,
   },
   methods: {
     btnPress() {
       if (this.onButtonPress) {
-        this.onButtonPress(this.inputValue);
+        this.onButtonPress(this.value);
       }
     },
-  },
-  data() {
-    return {
-      inputValue: "",
-    };
   },
 };
 </script>
