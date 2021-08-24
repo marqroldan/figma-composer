@@ -29,7 +29,7 @@
       <Button @click="selectAll">{{
         allSelected ? "Deselect All" : "Select All"
       }}</Button>
-      <div class="message"></div>
+      <div class="message" :class="{ error: error }">{{ message }}</div>
       <Button @click="generateAll">Generate</Button>
     </div>
   </div>
@@ -66,9 +66,15 @@ export default {
       fetching: false,
       selected: [],
       allSelected: false,
+      message: "",
+      error: false,
     };
   },
   methods: {
+    resetError() {
+      this.message = "";
+      this.error = false;
+    },
     messageHandler({ data }) {
       if (data.pluginMessage?.type === "Compose") {
         switch (data.pluginMessage?.action) {
@@ -102,20 +108,16 @@ export default {
             });
             break;
           }
-          case "progress": {
-            break;
-          }
           case "error": {
-            console.log("ERRROR!!!!", data.pluginMessage?.message);
-            break;
-          }
-          case "export": {
+            this.error = true;
+            this.message = data.pluginMessage?.message;
             break;
           }
         }
       }
     },
     generateAll() {
+      this.resetError();
       console.log("generateAll");
       parent.postMessage(
         {
@@ -132,6 +134,7 @@ export default {
       );
     },
     generate(item) {
+      this.resetError();
       console.log("generate", item);
       parent.postMessage(
         {
@@ -146,6 +149,7 @@ export default {
       );
     },
     preview(item) {
+      this.resetError();
       console.log("preview", item);
       parent.postMessage(
         {
@@ -210,8 +214,17 @@ export default {
 }
 
 .message {
+  display: flex;
   flex: 1;
   text-align: right;
+  align-content: center;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 15px;
+
+  &.error {
+    color: red;
+  }
 }
 
 .rc {
