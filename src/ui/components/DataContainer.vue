@@ -29,13 +29,14 @@
       <Button @click="selectAll">{{
         allSelected ? "Deselect All" : "Select All"
       }}</Button>
-      <div class="message"></div>
+      <div class="message" :class="{ error: error }">{{ message }}</div>
       <Button @click="generateAll">Generate</Button>
     </div>
   </div>
 </template>
 <script>
 import { Select, Checkbox, Txt, Input, Button } from "figma-plugin-ds-vue";
+import JSZip from "jszip";
 
 export default {
   components: { Select, Txt, Input, Button, Checkbox },
@@ -65,17 +66,102 @@ export default {
       fetching: false,
       selected: [],
       allSelected: false,
+      message: "",
+      error: false,
     };
   },
   methods: {
+    resetError() {
+      this.message = "";
+      this.error = false;
+    },
+    messageHandler({ data }) {
+      if (data.pluginMessage?.type === "Compose") {
+        switch (data.pluginMessage?.action) {
+          case "savePDF": {
+            const pdfData = data.pluginMessage?.data;
+            let blob = new Blob([pdfData], { type: "application/pdf" });
+            const blobURL = window.URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.className = "button button--primary";
+            link.href = blobURL;
+            link.download = "generate.pdf";
+            link.click();
+            break;
+          }
+          case "savePDFArchive": {
+            const pdfItems = data.pluginMessage?.data;
+            let zip = new JSZip();
+
+            for (let data of pdfItems) {
+              let blob = new Blob([data.data], { type: "application/pdf" });
+              zip.file(data.name, blob, { base64: true });
+            }
+
+            zip.generateAsync({ type: "blob" }).then((content) => {
+              const blobURL = window.URL.createObjectURL(content);
+              const link = document.createElement("a");
+              link.className = "button button--primary";
+              link.href = blobURL;
+              link.download = "export.zip";
+              link.click();
+            });
+            break;
+          }
+          case "error": {
+            this.error = true;
+            this.message = data.pluginMessage?.message;
+            break;
+          }
+        }
+      }
+    },
     generateAll() {
+      this.resetError();
       console.log("generateAll");
+      parent.postMessage(
+        {
+          pluginMessage: {
+            type: "Compose",
+            action: "generateAll",
+            headers: this.headers,
+            items: this.items.filter(
+              (item, index) => this.selected[index] !== false
+            ),
+          },
+        },
+        "*"
+      );
     },
     generate(item) {
+      this.resetError();
       console.log("generate", item);
+      parent.postMessage(
+        {
+          pluginMessage: {
+            type: "Compose",
+            action: "generate",
+            headers: this.headers,
+            item,
+          },
+        },
+        "*"
+      );
     },
     preview(item) {
+      this.resetError();
       console.log("preview", item);
+      parent.postMessage(
+        {
+          pluginMessage: {
+            type: "Compose",
+            action: "preview",
+            headers: this.headers,
+            item,
+          },
+        },
+        "*"
+      );
     },
     selectAll() {
       if (this.allSelected) {
@@ -102,6 +188,12 @@ export default {
       }
     },
   },
+  mounted() {
+    window.addEventListener("message", this.messageHandler);
+  },
+  beforeDestroy() {
+    window.removeEventListener("message", this.messageHandler);
+  },
 };
 </script>
 
@@ -122,8 +214,17 @@ export default {
 }
 
 .message {
+  display: flex;
   flex: 1;
   text-align: right;
+  align-content: center;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 15px;
+
+  &.error {
+    color: red;
+  }
 }
 
 .rc {
