@@ -5,9 +5,19 @@ figma.ui.onmessage = async msg => {
     // your HTML page is to use an object with a "type" property like this.
     console.log("I got triggered!");
     switch (msg.type) {
-        case 'getStoredAPIKey': {
-            figma.ui.postMessage({ type: 'getStoredAPIKey', value: 'hellooo' })
-            break;
+        case 'API': {
+            const sendAPIKey = (value: string = '') => {
+                figma.ui.postMessage({ type: 'API', action: 'get', value })
+            }
+
+            if (msg.action === 'store') {
+                const finalValue = msg.value || '';
+                figma.clientStorage.setAsync('APIKey', finalValue).then(() => {
+                    sendAPIKey(finalValue);
+                });
+            } else if (msg.action === 'get') {
+                figma.clientStorage.getAsync('APIKey').then(sendAPIKey);
+            }
         }
         case 'create-rectangles': {
             const nodes: SceneNode[] = [];
