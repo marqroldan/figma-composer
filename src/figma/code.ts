@@ -1,23 +1,12 @@
-import { promiseObject } from '../ui/helpers/promise';
-
 figma.showUI(__html__, { width: 610, height: 480 });
 
 const loadedFonts = {} as { [key: string]: boolean }
 
-const updateLayers = (headers: string[], targetFrame: FrameNode, item: string[]) => {
-    const { requestPromise, resolvePromise, rejectPromise } = promiseObject();
-    let headerCount = headers.length;
-    const headerDone = () => {
-        if (--headerCount === 0) {
-            resolvePromise(undefined);
-        }
-    }
-
-    //// Iterate through children and find matching targets
-    headers.forEach((header: string, index: number) => {
-        const targetChildren = targetFrame.findAll((child) => child.name == `%${header}%`) || [] as SceneNode[];
-        targetChildren.forEach(async (child, index) => {
-            ///modify
+const updateLayers = async (headers: string[], targetFrame: FrameNode, item: string[]) => {
+    for (let headerIndex = 0; headerIndex < headers.length; headerIndex++) {
+        const targetChildren = targetFrame.findAll((child) => child.name == `%${headers[headerIndex]}%`) || [] as SceneNode[];
+        for (let childIndex = 0; childIndex < targetChildren.length; childIndex++) {
+            const child = targetChildren[childIndex];
             switch (child.type) {
                 case "TEXT": {
                     const fontName = child.fontName as FontName;
@@ -25,18 +14,12 @@ const updateLayers = (headers: string[], targetFrame: FrameNode, item: string[])
                         await figma.loadFontAsync(fontName);
                         loadedFonts[`${fontName.family}${fontName.style}`] = true;
                     }
-                    child.characters = item[index];
+                    child.characters = item[childIndex];
                     break;
                 }
             }
-
-            if (index === targetChildren.length - 1) {
-                headerDone();
-            }
-        })
-    })
-
-    return requestPromise;
+        }
+    }
 }
 
 figma.ui.onmessage = async msg => {
