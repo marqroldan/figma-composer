@@ -1,11 +1,20 @@
 <template>
   <div>
     <Label>Sheets List</Label>
-    <div class="sheetQuery" v-if="|| items.length">
-      <Select :items="items" :value="selectedSheet.key" :disabled="fetching" />
+    <Select
+      v-if="items.length"
+      :items="items"
+      @input="fetchSheetData"
+      :value="selectedSheet.key"
+      :disabled="fetching"
+    />
+    <!--
+    <div class="sheetQuery" 
+      v-if="items.length">
       <Input v-model="range" placeholder="Range (ex. A2:U)" />
       <Button onPress="fetchSheetData">Fetch</Button>
     </div>
+      -->
   </div>
 </template>
 <script>
@@ -19,7 +28,7 @@ export default {
         return {
           value: item,
           label: item,
-          key: `item-${index + 1}`,
+          key: item,
         };
       });
     },
@@ -32,8 +41,20 @@ export default {
     };
   },
   methods: {
-    fetchSheetData() {
-      //const getSheetValue = this.items.find((item) => item.key === key);
+    fetchSheetData(key) {
+      const selectedSheet = this.items.find((item) => item.key === key);
+      if (selectedSheet) {
+        this.fetching = true;
+        this.$store.dispatch("fetchSheetRows", {
+          sheetName: selectedSheet.value,
+          error: () => {
+            this.fetching = false;
+          },
+          success: () => {
+            this.fetching = false;
+          },
+        });
+      }
     },
   },
   watch: {
