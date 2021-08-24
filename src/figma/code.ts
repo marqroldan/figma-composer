@@ -42,7 +42,6 @@ const updateLayers = (headers: string[], targetFrame: FrameNode, item: string[])
 figma.ui.onmessage = async msg => {
     // One way of distinguishing between different types of messages sent from
     // your HTML page is to use an object with a "type" property like this.
-    console.log("I got triggered!");
     switch (msg.type) {
         case 'API': {
             const sendAPIKey = (value: string = '') => {
@@ -67,29 +66,29 @@ figma.ui.onmessage = async msg => {
                 const headers = msg.headers;
 
                 if ((selectedFrame?.name || '').startsWith('[Preview]')) {
-                    console.log("Frame started with [Preview]")
+                    figma.ui.postMessage({ type: 'Compose', action: 'error', message: 'Frame selected cannot start with [Preview]' })
                     return;
                 }
+                const createPreviewName = (name: string) => `[Preview] ${name}`;
+                //// Find if there's a preview frame
+                let targetPreviewFrame = figma.currentPage.findChild((node) => {
+                    return node.type === 'FRAME' && node.name === createPreviewName(selectedFrame.name);
+                }) as FrameNode;
+
+                //// Clone the frame for preview
+                if (targetPreviewFrame == null) {
+                    targetPreviewFrame = selectedFrame.clone();
+                    targetPreviewFrame.name = createPreviewName(selectedFrame.name);
+                    targetPreviewFrame.x = targetPreviewFrame.x + 100 + selectedFrame.width;
+                    figma.currentPage.appendChild(targetPreviewFrame);
+                }
+
 
                 switch (msg.action) {
                     case 'generate':
                     case 'preview': {
-                        const item = msg.item;
-                        const createPreviewName = (name: string) => `[Preview] ${name}`;
-                        //// Find if there's a preview frame
-                        let targetPreviewFrame = figma.currentPage.findChild((node) => {
-                            return node.type === 'FRAME' && node.name === createPreviewName(selectedFrame.name);
-                        }) as FrameNode;
-                        //// Clone the frame for preview
-                        if (targetPreviewFrame == null) {
-                            console.log("No targetPreviewFrame found")
-                            targetPreviewFrame = selectedFrame.clone();
-                            targetPreviewFrame.name = createPreviewName(selectedFrame.name);
-                            targetPreviewFrame.x = targetPreviewFrame.x + 100 + selectedFrame.width;
-                            figma.currentPage.appendChild(targetPreviewFrame);
-                        }
-                        figma.viewport.scrollAndZoomIntoView([targetPreviewFrame]);
-                        await updateLayers(headers, targetPreviewFrame, item);
+                        //figma.viewport.scrollAndZoomIntoView([targetPreviewFrame]);
+                        await updateLayers(headers, targetPreviewFrame, msg.item);
 
                         if (msg.action === 'generate') {
                             try {
@@ -103,6 +102,29 @@ figma.ui.onmessage = async msg => {
                             }
 
                         }
+                        break;
+                    }
+                    case 'generateAll': {
+                        type pdfItem = { name: string, data: Uint8Array };
+
+                        const pdfItems = [] as pdfItem[];
+
+                        for (let index = 0; index < msg.items.length; index++) {
+                            const item = msg.items[index];
+                            await updateLayers(headers, targetPreviewFrame, item);
+                            const handler = figma.notify(`Generating PDF #${index}...`);
+                            const pdfData = await targetPreviewFrame.exportAsync({ format: 'PDF' });
+                            pdfItems.push({
+                                name: `${index} - ${headers[0]}${item[0]}.pdf`,
+                                data: pdfData,
+                            })
+                            handler.cancel();
+                        }
+
+                        const handler = figma.notify('Generating Archive...');
+                        figma.ui.postMessage({ type: 'Compose', action: 'savePDFArchive', data: pdfItems });
+                        handler.cancel();
+                        break;
                     }
                 }
                 return;
