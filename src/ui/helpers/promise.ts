@@ -17,3 +17,5 @@ export const promiseObject = <T>(): {
         promiseReject,
     };
 };
+
+export default promiseObject;
