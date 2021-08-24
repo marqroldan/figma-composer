@@ -23,8 +23,6 @@ const updateLayers = async (headers: string[], targetFrame: FrameNode, item: str
 }
 
 figma.ui.onmessage = async msg => {
-    // One way of distinguishing between different types of messages sent from
-    // your HTML page is to use an object with a "type" property like this.
     switch (msg.type) {
         case 'API': {
             const sendAPIKey = (value: string = '') => {
@@ -44,7 +42,6 @@ figma.ui.onmessage = async msg => {
         case 'Compose': {
             const selection = figma.currentPage.selection;
             if (selection.length === 1 && selection[0].type === 'FRAME') {
-                figma.ui.postMessage({ type: 'Compose', action: 'progress', message: 'Nice selection' })
                 const selectedFrame = selection[0];
                 const headers = msg.headers;
 
@@ -70,7 +67,6 @@ figma.ui.onmessage = async msg => {
                 switch (msg.action) {
                     case 'generate':
                     case 'preview': {
-                        //figma.viewport.scrollAndZoomIntoView([targetPreviewFrame]);
                         await updateLayers(headers, targetPreviewFrame, msg.item);
 
                         if (msg.action === 'generate') {
@@ -89,7 +85,6 @@ figma.ui.onmessage = async msg => {
                     }
                     case 'generateAll': {
                         type pdfItem = { name: string, data: Uint8Array };
-
                         const pdfItems = [] as pdfItem[];
 
                         for (let index = 0; index < msg.items.length; index++) {
@@ -116,41 +111,5 @@ figma.ui.onmessage = async msg => {
                 return;
             }
         }
-        case 'create-rectangles': {
-            const nodes: SceneNode[] = [];
-            /*
-            
-            for (let i = 0; i < msg.count; i++) {
-              const rect = figma.createRectangle();
-              rect.x = i * 150;
-              rect.fills = [{ type: 'SOLID', color: { r: 1, g: 0.5, b: 0 } }];
-              figma.currentPage.appendChild(rect);
-              nodes.push(rect);
-            }
-        
-            */
-            //figma.currentPage.selection = nodes;
-            //figma.viewport.scrollAndZoomIntoView(nodes);
-            const selectedFrame = figma.currentPage.findChild((n) => {
-                return n.type === 'FRAME' && n.name === 'A4 - 5';
-            });
-
-            const data = [];
-            for (let i = 0; i < 1; i++) {
-                try {
-                    const pdfData = await selectedFrame.exportAsync({ format: 'PDF' });
-                    data.push(pdfData);
-                } catch (e) {
-                    //
-                }
-            }
-
-            figma.ui.postMessage({ type: 'pdfExport', data })
-            break;
-        }
     }
-    //figma.closePlugin();
-
-    // Make sure to close the plugin when you're done. Otherwise the plugin will
-    // keep running, which shows the cancel button at the bottom of the screen.
 };
