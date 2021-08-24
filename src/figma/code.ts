@@ -1,4 +1,43 @@
+import { promiseObject } from '../ui/helpers/promise';
+
 figma.showUI(__html__, { width: 610, height: 480 });
+
+const loadedFonts = {} as { [key: string]: boolean }
+
+const updateLayers = (headers: string[], targetFrame: FrameNode, item: string[]) => {
+    const { requestPromise, resolvePromise, rejectPromise } = promiseObject();
+    let headerCount = headers.length;
+    const headerDone = () => {
+        if (--headerCount === 0) {
+            resolvePromise(undefined);
+        }
+    }
+
+    //// Iterate through children and find matching targets
+    headers.forEach((header: string, index: number) => {
+        const targetChildren = targetFrame.findAll((child) => child.name == `%${header}%`) || [] as SceneNode[];
+        targetChildren.forEach(async (child, index) => {
+            ///modify
+            switch (child.type) {
+                case "TEXT": {
+                    const fontName = child.fontName as FontName;
+                    if (!loadedFonts[`${fontName.family}${fontName.style}`]) {
+                        await figma.loadFontAsync(fontName);
+                        loadedFonts[`${fontName.family}${fontName.style}`] = true;
+                    }
+                    child.characters = item[index];
+                    break;
+                }
+            }
+
+            if (index === targetChildren.length - 1) {
+                headerDone();
+            }
+        })
+    })
+
+    return requestPromise;
+}
 
 figma.ui.onmessage = async msg => {
     // One way of distinguishing between different types of messages sent from
@@ -33,6 +72,7 @@ figma.ui.onmessage = async msg => {
                 }
 
                 switch (msg.action) {
+                    case 'generate':
                     case 'preview': {
                         const item = msg.item;
                         const createPreviewName = (name: string) => `[Preview] ${name}`;
@@ -49,24 +89,20 @@ figma.ui.onmessage = async msg => {
                             figma.currentPage.appendChild(targetPreviewFrame);
                         }
                         figma.viewport.scrollAndZoomIntoView([targetPreviewFrame]);
+                        await updateLayers(headers, targetPreviewFrame, item);
 
-                        //// Iterate through children and find matching targets
-                        headers.forEach((header: string, index: number) => {
-                            const targetChildren = targetPreviewFrame.findAll((child) => child.name == `%${header}%`) || [] as SceneNode[];
-                            targetChildren.forEach(async (child) => {
-                                ///modify
-                                switch (child.type) {
-                                    case "TEXT": {
-                                        await figma.loadFontAsync(child.fontName as FontName)
-                                        child.characters = item[index];
-                                        break;
-                                    }
-                                }
-                            })
-                        })
+                        if (msg.action === 'generate') {
+                            try {
+                                const handler = figma.notify('Generating PDF...');
+                                const pdfData = await targetPreviewFrame.exportAsync({ format: 'PDF' })
+                                figma.ui.postMessage({ type: 'Compose', action: 'savePDF', data: pdfData });
+                                handler.cancel();
+                                return;
+                            } catch (e) {
+                                figma.ui.postMessage({ type: 'Compose', action: 'error', message: 'Generate failed' })
+                            }
 
-
-                        break;
+                        }
                     }
                 }
                 return;
