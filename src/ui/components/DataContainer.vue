@@ -36,6 +36,7 @@
 </template>
 <script>
 import { Select, Checkbox, Txt, Input, Button } from "figma-plugin-ds-vue";
+import JSZip from "jszip";
 
 export default {
   components: { Select, Txt, Input, Button, Checkbox },
@@ -82,10 +83,30 @@ export default {
             link.click();
             break;
           }
+          case "savePDFArchive": {
+            const pdfItems = data.pluginMessage?.data;
+            let zip = new JSZip();
+
+            for (let data of pdfItems) {
+              let blob = new Blob([data.data], { type: "application/pdf" });
+              zip.file(data.name, blob, { base64: true });
+            }
+
+            zip.generateAsync({ type: "blob" }).then((content) => {
+              const blobURL = window.URL.createObjectURL(content);
+              const link = document.createElement("a");
+              link.className = "button button--primary";
+              link.href = blobURL;
+              link.download = "export.zip";
+              link.click();
+            });
+            break;
+          }
           case "progress": {
             break;
           }
           case "error": {
+            console.log("ERRROR!!!!", data.pluginMessage?.message);
             break;
           }
           case "export": {
