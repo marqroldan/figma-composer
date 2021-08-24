@@ -71,6 +71,17 @@ export default {
     messageHandler({ data }) {
       if (data.pluginMessage?.type === "Compose") {
         switch (data.pluginMessage?.action) {
+          case "savePDF": {
+            const pdfData = data.pluginMessage?.data;
+            let blob = new Blob([pdfData], { type: "application/pdf" });
+            const blobURL = window.URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.className = "button button--primary";
+            link.href = blobURL;
+            link.download = "generate.pdf";
+            link.click();
+            break;
+          }
           case "progress": {
             break;
           }
