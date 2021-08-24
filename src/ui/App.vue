@@ -5,7 +5,6 @@
       <GSheetsURL />
       <SheetsList />
     </div>
-    <Divider />
   </div>
 </template>
 
@@ -13,7 +12,7 @@
 import APIKey from "./components/APIKey";
 import GSheetsURL from "./components/GSheetsURL";
 import SheetsList from "./components/SheetsList";
-import { Button, Divider } from "figma-plugin-ds-vue";
+import { Button } from "figma-plugin-ds-vue";
 
 export default {
   components: {
@@ -21,7 +20,6 @@ export default {
     APIKey,
     GSheetsURL,
     SheetsList,
-    Divider,
   },
 };
 </script>
