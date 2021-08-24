@@ -2,6 +2,7 @@ import { obtainGsheetsData } from "../../helpers/gsheets";
 
 export default {
     state: {
+        url: '',
         value: '',
         sheetName: '',
         sheets: [],
@@ -13,6 +14,9 @@ export default {
         },
         changeKey(state, APIKey) {
             state.value = APIKey
+        },
+        changeSheetsURL(state, url) {
+            state.url = url;
         }
     },
     actions: {
