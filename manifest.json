@@ -3,5 +3,8 @@
 	"id": "1010867408833823226",
 	"api": "1.0.0",
 	"main": "dist/code.js",
-	"ui": "dist/ui.html"
+	"ui": "dist/ui.html",
+	"editorType": [
+		"figma"
+	]
 }
