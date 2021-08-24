@@ -45,6 +45,7 @@ export default {
       const selectedSheet = this.items.find((item) => item.key === key);
       if (selectedSheet) {
         this.fetching = true;
+        this.$store.commit("changeSelectedSheet", selectedSheet.value);
         this.$store.dispatch("fetchSheetRows", {
           sheetName: selectedSheet.value,
           error: () => {

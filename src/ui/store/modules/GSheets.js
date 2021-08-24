@@ -8,16 +8,26 @@ export default {
         sheets: [],
         sheetData: {},
         headers: {},
+        currentSheet: ''
     },
     mutations: {
+        changeSelectedSheet(state, data) {
+            state.currentSheet = data;
+        },
         updateGSheetsData(state, data) {
             state.sheetName = data.properties.title;
             state.sheets = data.sheets.map((item) => item.properties.title);
         },
         updateSheetRows(state, data) {
-            state.headers[data.sheetName] = data.values[0];
+            state.headers = {
+                ...state.headers,
+                [data.sheetName]: data.values[0]
+            };
             data.values.shift();
-            state.sheetData[data.sheetName] = data.values;
+            state.sheetData = {
+                ...state.sheetData,
+                [data.sheetName]: data.values
+            }
         },
         changeKey(state, APIKey) {
             state.value = APIKey

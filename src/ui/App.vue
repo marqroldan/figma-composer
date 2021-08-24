@@ -5,6 +5,7 @@
       <GSheetsURL />
       <SheetsList />
     </div>
+    <DataContainer />
   </div>
 </template>
 
@@ -12,6 +13,7 @@
 import APIKey from "./components/APIKey";
 import GSheetsURL from "./components/GSheetsURL";
 import SheetsList from "./components/SheetsList";
+import DataContainer from "./components/DataContainer";
 import { Button } from "figma-plugin-ds-vue";
 
 export default {
@@ -19,14 +21,24 @@ export default {
     Button,
     APIKey,
     GSheetsURL,
+    DataContainer,
     SheetsList,
   },
 };
 </script>
 
 <style lang="scss">
+html,
+body {
+  height: 100%;
+  min-height: 100%;
+}
+
 .rootContainer {
-  padding: 20;
+  padding: 20px;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  height: 100%;
 }
 
 .header {
