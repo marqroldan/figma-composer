@@ -8,8 +8,12 @@ export default {
         sheets: [],
         sheetData: {},
         headers: {},
+        currentSheet: ''
     },
     mutations: {
+        changeSelectedSheet(state, data) {
+            state.currentSheet = data;
+        },
         updateGSheetsData(state, data) {
             state.sheetName = data.properties.title;
             state.sheets = data.sheets.map((item) => item.properties.title);
