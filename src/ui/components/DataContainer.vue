@@ -85,12 +85,47 @@ export default {
     },
     generateAll() {
       console.log("generateAll");
+      parent.postMessage(
+        {
+          pluginMessage: {
+            type: "Compose",
+            action: "generateAll",
+            headers: this.headers,
+            items: this.items.filter(
+              (item, index) => this.selected[index] !== false
+            ),
+          },
+        },
+        "*"
+      );
     },
     generate(item) {
       console.log("generate", item);
+      parent.postMessage(
+        {
+          pluginMessage: {
+            type: "Compose",
+            action: "generate",
+            headers: this.headers,
+            item,
+          },
+        },
+        "*"
+      );
     },
     preview(item) {
       console.log("preview", item);
+      parent.postMessage(
+        {
+          pluginMessage: {
+            type: "Compose",
+            action: "preview",
+            headers: this.headers,
+            item,
+          },
+        },
+        "*"
+      );
     },
     selectAll() {
       if (this.allSelected) {
