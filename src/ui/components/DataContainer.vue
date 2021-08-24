@@ -22,7 +22,9 @@
       </div>
     </div>
     <div class="bottom">
-      <Button>Test</Button>
+      <Button @click="selectAll">{{
+        allSelected ? "Deselect All" : "Select All"
+      }}</Button>
     </div>
   </div>
 </template>
@@ -62,9 +64,19 @@ export default {
       range: "",
       fetching: false,
       selected: [],
+      allSelected: false,
     };
   },
   methods: {
+    selectAll() {
+      if (this.allSelected) {
+        this.allSelected = false;
+        this.selected = this.items.map((item) => false);
+      } else {
+        this.allSelected = true;
+        this.selected = this.items.map((item) => true);
+      }
+    },
     fetchSheetData(key) {
       const selectedSheet = this.items.find((item) => item.key === key);
       if (selectedSheet) {
