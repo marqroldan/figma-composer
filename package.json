@@ -2,7 +2,11 @@
   "name": "figma-composer",
   "description": "Mail-merge type of plugin",
   "version": "1.0.0",
-  "author": "",
+  "author": {
+    "name": "Marq Roldan",
+    "email": "hcmlroldan@gmail.com",
+    "url": "https://github.com/marqroldan/figma-composer"
+  },
   "license": "MIT",
   "private": true,
   "scripts": {
