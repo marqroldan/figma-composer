@@ -1,49 +1,25 @@
 <template>
-  <div class="rc">
+  <div class="rc" v-if="true || shouldShow">
     <Txt>Items</Txt>
     <div class="dataContainer">
-      <div style="height: 50px; width: 50px; background: red"></div>
-      <div style="height: 50px; width: 50px; background: red"></div>
-      <div style="height: 50px; width: 50px; background: red"></div>
-      <div style="height: 50px; width: 50px; background: red"></div>
-      <div style="height: 50px; width: 50px; background: red"></div>
-      <div style="height: 50px; width: 50px; background: red"></div>
-      <div style="height: 50px; width: 50px; background: red"></div>
-      <div style="height: 50px; width: 50px; background: red"></div>
-      <div style="height: 50px; width: 50px; background: red"></div>
-      <div style="height: 50px; width: 50px; background: red"></div>
-      <div style="height: 50px; width: 50px; background: red"></div>
-      <div style="height: 50px; width: 50px; background: red"></div>
-      <div style="height: 50px; width: 50px; background: red"></div>
-      <div style="height: 50px; width: 50px; background: red"></div>
-      <div style="height: 50px; width: 50px; background: red"></div>
-      <div style="height: 50px; width: 50px; background: red"></div>
-      <div style="height: 50px; width: 50px; background: red"></div>
-      <div style="height: 50px; width: 50px; background: red"></div>
-      <div style="height: 50px; width: 50px; background: red"></div>
-      <div style="height: 50px; width: 50px; background: red"></div>
-      <div style="height: 50px; width: 50px; background: red"></div>
-      <div style="height: 50px; width: 50px; background: red"></div>
-      <div style="height: 50px; width: 50px; background: red"></div>
-      <div style="height: 50px; width: 50px; background: red"></div>
-      <div style="height: 50px; width: 50px; background: red"></div>
-      <div style="height: 50px; width: 50px; background: red"></div>
-      <div style="height: 50px; width: 50px; background: red"></div>
-      <div style="height: 50px; width: 50px; background: red"></div>
-      <div style="height: 50px; width: 50px; background: red"></div>
-      <div style="height: 50px; width: 50px; background: red"></div>
-      <div style="height: 50px; width: 50px; background: red"></div>
-      <div style="height: 50px; width: 50px; background: red"></div>
-      <div style="height: 50px; width: 50px; background: red"></div>
-      <div style="height: 50px; width: 50px; background: red"></div>
-      <div style="height: 50px; width: 50px; background: red"></div>
-      <div style="height: 50px; width: 50px; background: red"></div>
-      <div style="height: 50px; width: 50px; background: red"></div>
-      <div style="height: 50px; width: 50px; background: red"></div>
-      <div style="height: 50px; width: 50px; background: red"></div>
-      <div style="height: 50px; width: 50px; background: red"></div>
-      <div style="height: 50px; width: 50px; background: red"></div>
-      <div style="height: 50px; width: 50px; background: red"></div>
+      <div class="item" v-for="(item, index) in items" :key="index">
+        <div style="flex: 1">
+          <Checkbox v-model="selected[index]">
+            <div class="fieldValues">
+              <div
+                class="fieldValues__item"
+                v-for="(header, headerIndex) in headers"
+                :key="headerIndex"
+              >
+                <span class="headerLabel">{{ header }}</span>
+                <span class="value">{{ item[index] }}</span>
+              </div>
+            </div>
+          </Checkbox>
+        </div>
+        <Button>Preview</Button>
+        <Button>Generate</Button>
+      </div>
     </div>
     <div class="bottom">
       <Button>Test</Button>
@@ -51,19 +27,33 @@
   </div>
 </template>
 <script>
-import { Select, Txt, Input, Button } from "figma-plugin-ds-vue";
+import { Select, Checkbox, Txt, Input, Button } from "figma-plugin-ds-vue";
 
 export default {
-  components: { Select, Txt, Input, Button },
+  components: { Select, Txt, Input, Button, Checkbox },
   computed: {
+    headers() {
+      return (
+        this.$store.state.GSheets.headers[
+          this.$store.state.GSheets.currentSheet
+        ] || []
+      );
+    },
+    shouldShow() {
+      console.log(
+        "uhhhhhhhhhhhh",
+        !!Object.keys(this.$store.state.GSheets.headers).length,
+        this.$store.state.GSheets.headers
+      );
+      const gg = gg;
+      return !!Object.keys(this.$store.state.GSheets.headers).length;
+    },
     items() {
-      return this.$store.state.GSheets.sheets.map((item, index) => {
-        return {
-          value: item,
-          label: item,
-          key: item,
-        };
-      });
+      return (
+        this.$store.state.GSheets.sheetData[
+          this.$store.state.GSheets.currentSheet
+        ] || []
+      );
     },
   },
   data() {
@@ -71,6 +61,7 @@ export default {
       selectedSheet: {},
       range: "",
       fetching: false,
+      selected: [],
     };
   },
   methods: {
@@ -126,6 +117,30 @@ export default {
   flex: 1;
   overflow: hidden;
   height: 100%;
+}
+
+.item {
+  padding: 10px;
+  border-bottom: 1px solid #e5e5e5;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.headerLabel {
+  display: inline-block;
+  margin-right: 5px;
+  font-weight: "bold";
+}
+
+.fieldValues {
+  display: flex;
+  flex-wrap: wrap;
+  overflow: hidden;
+
+  &__item {
+    margin-right: 15px;
+  }
 }
 </style>
 
