@@ -15,9 +15,15 @@ export default {
             state.sheets = data.sheets.map((item) => item.properties.title);
         },
         updateSheetRows(state, data) {
-            state.headers[data.sheetName] = data.values[0];
+            state.headers = {
+                ...state.headers,
+                [data.sheetName]: data.values[0]
+            };
             data.values.shift();
-            state.sheetData[data.sheetName] = data.values;
+            state.sheetData = {
+                ...state.sheetData,
+                [data.sheetName]: data.values
+            }
         },
         changeKey(state, APIKey) {
             state.value = APIKey
