@@ -6,25 +6,31 @@
         <div style="flex: 1">
           <Checkbox v-model="selected[index]">
             <div class="fieldValues">
-              <div
+              <span
                 class="fieldValues__item"
                 v-for="(header, headerIndex) in headers"
                 :key="headerIndex"
               >
                 <span class="headerLabel">{{ header }}</span>
-                <span class="value">{{ item[index] }}</span>
-              </div>
+                <span class="value">{{ item[headerIndex] }}</span>
+              </span>
             </div>
           </Checkbox>
         </div>
-        <Button>Preview</Button>
-        <Button>Generate</Button>
+        <div class="btnWrapper">
+          <Button @click="preview(item)">Preview</Button>
+        </div>
+        <div class="btnWrapper">
+          <Button @click="generate(item)">Generate</Button>
+        </div>
       </div>
     </div>
     <div class="bottom">
       <Button @click="selectAll">{{
         allSelected ? "Deselect All" : "Select All"
       }}</Button>
+      <div class="message"></div>
+      <Button @click="generateAll">Generate</Button>
     </div>
   </div>
 </template>
@@ -42,12 +48,6 @@ export default {
       );
     },
     shouldShow() {
-      console.log(
-        "uhhhhhhhhhhhh",
-        !!Object.keys(this.$store.state.GSheets.headers).length,
-        this.$store.state.GSheets.headers
-      );
-      const gg = gg;
       return !!Object.keys(this.$store.state.GSheets.headers).length;
     },
     items() {
@@ -68,6 +68,15 @@ export default {
     };
   },
   methods: {
+    generateAll() {
+      console.log("generateAll");
+    },
+    generate(item) {
+      console.log("generate", item);
+    },
+    preview(item) {
+      console.log("preview", item);
+    },
     selectAll() {
       if (this.allSelected) {
         this.allSelected = false;
@@ -93,22 +102,6 @@ export default {
       }
     },
   },
-  watch: {
-    /*
-    items(to, from) {
-      if (
-        this.selectedSheet.key &&
-        !to.some((item) => item.key === this.selectedSheet.key)
-      ) {
-        this.selectedSheet = {};
-      } else {
-        if (!this.selectedSheet.key) {
-          this.selectedSheet = to[0] || {};
-        }
-      }
-    },
-    */
-  },
 };
 </script>
 
@@ -121,6 +114,16 @@ export default {
 }
 
 .bottom {
+  display: flex;
+}
+
+.btnWrapper {
+  margin-left: 5px;
+}
+
+.message {
+  flex: 1;
+  text-align: right;
 }
 
 .rc {
@@ -149,13 +152,14 @@ export default {
   display: flex;
   flex-wrap: wrap;
   overflow: hidden;
+  flex: 1;
+  max-height: 35px;
+  align-self: center;
+  -webkit-line-clamp: 2;
 
   &__item {
+    display: inline-block;
     margin-right: 15px;
   }
 }
 </style>
-
-<!---
-
-    -->
