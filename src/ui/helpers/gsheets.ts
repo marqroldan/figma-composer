@@ -1,18 +1,25 @@
-export const obtainGsheetsData = () => {
-    const key = 'AIzaSyD3xEOcE-O_C_d2EsREcYICFURVGo-itdY';
-    const sheetID = '17YXfsS3mB5p174hZmfh_bnzONsdxV_nN13q0qgTDtMg';
-    const urlbase = 'https://sheets.googleapis.com/v4/spreadsheets/';
+
+import promiseObject from "./promise";
+
+const urlbase = 'https://sheets.googleapis.com/v4/spreadsheets/';
+
+export const extractSheetID = (gSheetsURL: string) => {
+    return gSheetsURL.replace('https://docs.google.com/spreadsheets/d/', '').split('/')[0] || '';
+}
+
+export const obtainGsheetsData = (key: string, url: string) => {
+    const sheetID = extractSheetID(url);
 
     console.log("HELLO", window.location.hostname)
+    const { requestPromise, rejectPromise, resolvePromise } = promiseObject();
 
     fetch(`${urlbase}${sheetID}?key=${key}`).then((res) => {
         if (res.ok) {
-            return res.json();
+            res.json().then(resolvePromise).catch(rejectPromise);
+        } else {
+            rejectPromise();
         }
-    }).catch((e) => {
-        console.warn(e)
-    }).then((res) => {
+    }).catch(rejectPromise)
 
-        console.log("Yay", res);
-    });
+    return requestPromise;
 }
