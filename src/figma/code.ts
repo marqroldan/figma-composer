@@ -45,21 +45,19 @@ figma.ui.onmessage = async msg => {
                             console.log("No targetPreviewFrame found")
                             targetPreviewFrame = selectedFrame.clone();
                             targetPreviewFrame.name = createPreviewName(selectedFrame.name);
-                            targetPreviewFrame.x = 100 + selectedFrame.width;
+                            targetPreviewFrame.x = targetPreviewFrame.x + 100 + selectedFrame.width;
                             figma.currentPage.appendChild(targetPreviewFrame);
                         }
                         figma.viewport.scrollAndZoomIntoView([targetPreviewFrame]);
 
-                        await figma.loadFontAsync({ family: "Roboto", style: "Regular" })
-
                         //// Iterate through children and find matching targets
                         headers.forEach((header: string, index: number) => {
                             const targetChildren = targetPreviewFrame.findAll((child) => child.name == `%${header}%`) || [] as SceneNode[];
-                            targetChildren.forEach((child) => {
+                            targetChildren.forEach(async (child) => {
                                 ///modify
                                 switch (child.type) {
                                     case "TEXT": {
-                                        console.log("Updating...............", JSON.stringify(child));
+                                        await figma.loadFontAsync(child.fontName as FontName)
                                         child.characters = item[index];
                                         break;
                                     }
