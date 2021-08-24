@@ -1,4 +1,4 @@
-figma.showUI(__html__, { width: 350, height: 600 });
+figma.showUI(__html__, { width: 610, height: 480 });
 
 figma.ui.onmessage = async msg => {
     // One way of distinguishing between different types of messages sent from
