@@ -68,6 +68,21 @@ export default {
     };
   },
   methods: {
+    messageHandler({ data }) {
+      if (data.pluginMessage?.type === "Compose") {
+        switch (data.pluginMessage?.action) {
+          case "progress": {
+            break;
+          }
+          case "error": {
+            break;
+          }
+          case "export": {
+            break;
+          }
+        }
+      }
+    },
     generateAll() {
       console.log("generateAll");
     },
@@ -101,6 +116,12 @@ export default {
         });
       }
     },
+  },
+  mounted() {
+    window.addEventListener("message", this.messageHandler);
+  },
+  beforeDestroy() {
+    window.removeEventListener("message", this.messageHandler);
   },
 };
 </script>
