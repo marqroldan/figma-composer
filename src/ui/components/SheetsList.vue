@@ -1,6 +1,6 @@
 <template>
   <div>
-    <Label>Sheets List</Label>
+    <Txt>Sheets List</Txt>
     <Select
       v-if="items.length"
       :items="items"
@@ -18,10 +18,10 @@
   </div>
 </template>
 <script>
-import { Select, Label, Input, Button } from "figma-plugin-ds-vue";
+import { Select, Txt, Input, Button } from "figma-plugin-ds-vue";
 
 export default {
-  components: { Select, Label, Input, Button },
+  components: { Select, Txt, Input, Button },
   computed: {
     items() {
       return this.$store.state.GSheets.sheets.map((item, index) => {

@@ -1,27 +1,29 @@
 <template>
   <div>
-    <Label v-if="label">{{ label }}</Label>
-    <Input
-      icon="key"
-      :value="value"
-      :disabled="disabled"
-      :placeholder="placeholder"
-      :spinning="spinning"
-      :border="border"
-      @input="$emit('input', $event)"
-      @change="$emit('change', $event)"
-    />
-    <Button @click="btnPress">{{ btnLabel }}</Button>
+    <Txt v-if="label">{{ label }}</Txt>
+    <div class="input-button">
+      <Input
+        :icon="icon"
+        :value="value"
+        :disabled="disabled"
+        :placeholder="placeholder"
+        :spinning="spinning"
+        :border="border"
+        @input="$emit('input', $event)"
+        @change="$emit('change', $event)"
+      />
+      <Button @click="btnPress">{{ btnLabel }}</Button>
+    </div>
   </div>
 </template>
 
 <script>
-import { Button, Label, Input } from "figma-plugin-ds-vue";
+import { Button, Txt, Input } from "figma-plugin-ds-vue";
 
 export default {
   components: {
+    Txt,
     Input,
-    Label,
     Button,
   },
   props: {
@@ -46,3 +48,9 @@ export default {
   },
 };
 </script>
+
+<style lang="scss" scoped>
+.input-button {
+  display: flex;
+}
+</style>
