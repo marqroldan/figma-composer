@@ -10,7 +10,7 @@ export default {
     mutations: {
         updateGSheetsData(state, data) {
             state.sheetName = data.properties.title;
-            state.sheets = data.sheets.map((item) => item.title);
+            state.sheets = data.sheets.map((item) => item.properties.title);
         },
         changeKey(state, APIKey) {
             state.value = APIKey
