@@ -2,8 +2,8 @@
   <div>
     <Welcome />
     <APIKey />
-
-    <Button @click="obtainGsheetsData">Hi!</Button>
+    {{ loading ? "yes i am" : "not loading" }}
+    <Button @click="hmmm">Hi!</Button>
   </div>
 </template>
 
@@ -15,7 +15,9 @@ import { obtainGsheetsData } from "./helpers/gsheets";
 
 export default {
   data() {
-    return {};
+    return {
+      loading: false,
+    };
   },
 
   components: {
@@ -23,11 +25,22 @@ export default {
     Button,
     APIKey,
   },
-
   methods: {
-    obtainGsheetsData,
+    hmmm() {
+      this.loading = true;
+      this.$store.dispatch("fetchGSheetsData", {
+        url: "https://docs.google.com/spreadsheets/d/17YXfsS3mB5p174hZmfh_bnzONsdxV_nN13q0qgTDtMg/edit?usp=sharing",
+        error: () => {
+          console.log("HUH???");
+          this.loading = false;
+        },
+        success: () => {
+          console.log("Success!");
+          this.loading = false;
+        },
+      });
+    },
   },
-
   mounted() {
     console.log("HIII");
     // Initialize the figma-ds components
