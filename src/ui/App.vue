@@ -1,8 +1,11 @@
 <template>
-  <div>
-    <APIKey />
-    <GSheetsURL />
-    <SheetsList />
+  <div class="rootContainer">
+    <div class="header">
+      <APIKey />
+      <GSheetsURL />
+      <SheetsList />
+    </div>
+    <Divider />
   </div>
 </template>
 
@@ -10,7 +13,7 @@
 import APIKey from "./components/APIKey";
 import GSheetsURL from "./components/GSheetsURL";
 import SheetsList from "./components/SheetsList";
-import { Button } from "figma-plugin-ds-vue";
+import { Button, Divider } from "figma-plugin-ds-vue";
 
 export default {
   components: {
@@ -18,9 +21,19 @@ export default {
     APIKey,
     GSheetsURL,
     SheetsList,
+    Divider,
   },
 };
 </script>
 
 <style lang="scss">
+.rootContainer {
+  padding: 20;
+}
+
+.header {
+  display: grid;
+  grid-template-columns: 200px 200px 150px;
+  column-gap: 10px;
+}
 </style>
