@@ -20,6 +20,63 @@ figma.ui.onmessage = async msg => {
             }
             break;
         }
+        case 'Compose': {
+            const selection = figma.currentPage.selection;
+            if (selection.length === 1 && selection[0].type === 'FRAME') {
+                figma.ui.postMessage({ type: 'Compose', action: 'progress', message: 'Nice selection' })
+                const selectedFrame = selection[0];
+                const headers = msg.headers;
+
+                if ((selectedFrame?.name || '').startsWith('[Preview]')) {
+                    console.log("Frame started with [Preview]")
+                    return;
+                }
+
+                switch (msg.action) {
+                    case 'preview': {
+                        const item = msg.item;
+                        const createPreviewName = (name: string) => `[Preview] ${name}`;
+                        //// Find if there's a preview frame
+                        let targetPreviewFrame = figma.currentPage.findChild((node) => {
+                            return node.type === 'FRAME' && node.name === createPreviewName(selectedFrame.name);
+                        }) as FrameNode;
+                        //// Clone the frame for preview
+                        if (targetPreviewFrame == null) {
+                            console.log("No targetPreviewFrame found")
+                            targetPreviewFrame = selectedFrame.clone();
+                            targetPreviewFrame.name = createPreviewName(selectedFrame.name);
+                            targetPreviewFrame.x = 100 + selectedFrame.width;
+                            figma.currentPage.appendChild(targetPreviewFrame);
+                        }
+                        figma.viewport.scrollAndZoomIntoView([targetPreviewFrame]);
+
+                        await figma.loadFontAsync({ family: "Roboto", style: "Regular" })
+
+                        //// Iterate through children and find matching targets
+                        headers.forEach((header: string, index: number) => {
+                            const targetChildren = targetPreviewFrame.findAll((child) => child.name == `%${header}%`) || [] as SceneNode[];
+                            targetChildren.forEach((child) => {
+                                ///modify
+                                switch (child.type) {
+                                    case "TEXT": {
+                                        console.log("Updating...............", JSON.stringify(child));
+                                        child.characters = item[index];
+                                        break;
+                                    }
+                                }
+                            })
+                        })
+
+
+                        break;
+                    }
+                }
+                return;
+            } else {
+                figma.ui.postMessage({ type: 'Compose', action: 'error', message: 'Selection should only be one Frame' })
+                return;
+            }
+        }
         case 'create-rectangles': {
             const nodes: SceneNode[] = [];
             /*
