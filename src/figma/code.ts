@@ -3,20 +3,32 @@ figma.showUI(__html__, { width: 610, height: 480 });
 const loadedFonts = {} as { [key: string]: boolean }
 
 const updateLayers = async (headers: string[], targetFrame: FrameNode, item: string[]) => {
+    /*
     for (let headerIndex = 0; headerIndex < headers.length; headerIndex++) {
-        const targetChildren = targetFrame.findAll((child) => child.name == `%${headers[headerIndex]}%`) || [] as SceneNode[];
-        for (let childIndex = 0; childIndex < targetChildren.length; childIndex++) {
-            const child = targetChildren[childIndex];
-            switch (child.type) {
-                case "TEXT": {
-                    const fontName = child.fontName as FontName;
-                    if (!loadedFonts[`${fontName.family}${fontName.style}`]) {
-                        await figma.loadFontAsync(fontName);
-                        loadedFonts[`${fontName.family}${fontName.style}`] = true;
-                    }
-                    child.characters = item[childIndex];
-                    break;
+    }*/
+
+    const targetChildren = targetFrame.findAll((child) => {
+        /*
+        child.name == `%${headers[headerIndex]}%`
+        */
+
+        return child.type === 'TEXT';
+    }) || [] as SceneNode[];
+    for (let childIndex = 0; childIndex < targetChildren.length; childIndex++) {
+        const child = targetChildren[childIndex];
+        switch (child.type) {
+            case "TEXT": {
+                const fontName = child.fontName as FontName;
+                if (!loadedFonts[`${fontName.family}${fontName.style}`]) {
+                    await figma.loadFontAsync(fontName);
+                    loadedFonts[`${fontName.family}${fontName.style}`] = true;
                 }
+                headers.forEach((headerItem, headerIndex) => {
+                    child.characters = child.characters.replace(`%%${headerItem}%%`, item[headerIndex]);
+                })
+                //console.log("huhhh", item, childIndex, item[childIndex])
+                //child.characters = child.characters.replace(`%%${headers[headerIndex]}%%`, item[childIndex]);
+                break;
             }
         }
     }
