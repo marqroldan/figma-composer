@@ -21,7 +21,7 @@
           <Button @click="preview(item)">Preview</Button>
         </div>
         <div class="btnWrapper">
-          <Button @click="generate(item)">Generate</Button>
+          <Button @click="generate(item, index)">Generate</Button>
         </div>
       </div>
     </div>
@@ -85,7 +85,9 @@ export default {
             const link = document.createElement("a");
             link.className = "button button--primary";
             link.href = blobURL;
-            link.download = "generate.pdf";
+            link.download = `${this.$store.state.GSheets.sheetName} - #${
+              data.pluginMessage.rowNumber + 1
+            }.pdf`;
             link.click();
             break;
           }
@@ -137,9 +139,8 @@ export default {
         this.message = "Please select at least one item";
       }
     },
-    generate(item) {
+    generate(item, index) {
       this.resetError();
-      console.log("generate", item);
       parent.postMessage(
         {
           pluginMessage: {
@@ -147,6 +148,7 @@ export default {
             action: "generate",
             headers: this.headers,
             item,
+            index,
           },
         },
         "*"
