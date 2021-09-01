@@ -19,6 +19,24 @@ const loadFonts = async (valFontNames: FontName | FontName[]) => {
 
 }
 
+let notifyHandler: NotificationHandler;
+const notify = async (message: string) => {
+    notifyHandler?.cancel?.();
+    notifyHandler = figma.notify(message);
+    await delay(0.5);
+}
+
+const notifyCancel = () => {
+    notifyHandler?.cancel?.();
+}
+
+let isGenerating = false;
+figma.on('close', () => {
+    if (isGenerating) {
+        notify('Generation aborted');
+    }
+})
+
 const createPreviewName = (name: string) => `[Preview] ${name}`;
 
 const updateLayers = async (headers: string[], selectedFrame: FrameNode, item: string[]) => {
@@ -141,12 +159,12 @@ figma.ui.onmessage = async msg => {
                         const targetPreviewFrame = await updateLayers(headers, selectedFrame, msg.item);
 
                         if (msg.action === 'generate') {
+                            isGenerating = true;
                             try {
-                                const handler = figma.notify('Generating PDF...');
-                                await delay(0.5);
+                                await notify('Generating PDF...');
                                 const pdfData = await targetPreviewFrame.exportAsync({ format: 'PDF' })
                                 figma.ui.postMessage({ type: 'Compose', action: 'savePDF', data: pdfData });
-                                handler.cancel();
+                                notifyCancel();
                                 return;
                             } catch (e) {
                                 figma.ui.postMessage({ type: 'Compose', action: 'error', message: 'Generate failed' })
@@ -156,25 +174,25 @@ figma.ui.onmessage = async msg => {
                         break;
                     }
                     case 'generateAll': {
+                        isGenerating = true;
                         type pdfItem = { name: string, data: Uint8Array };
                         const pdfItems = [] as pdfItem[];
 
                         for (let index = 0; index < msg.items.length; index++) {
                             const item = msg.items[index];
-                            const handler = figma.notify(`Generating PDF #${index + 1}...`);
-                            await delay(0.5);
+                            await notify(`Generating PDF #${index + 1}...`);
                             const targetPreviewFrame = await updateLayers(headers, selectedFrame, item);
                             const pdfData = await targetPreviewFrame.exportAsync({ format: 'PDF' });
                             pdfItems.push({
                                 name: `${index} - ${headers[0]}${item[0]}.pdf`,
                                 data: pdfData,
                             })
-                            handler.cancel();
+                            notifyCancel();
                         }
 
-                        const handler = figma.notify('Generating Archive...');
+                        await notify('Generating Archive...');
                         figma.ui.postMessage({ type: 'Compose', action: 'savePDFArchive', data: pdfItems });
-                        handler.cancel();
+                        notifyCancel();
                         break;
                     }
                 }
