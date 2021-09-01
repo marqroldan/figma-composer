@@ -161,7 +161,7 @@ figma.ui.onmessage = async msg => {
 
                         for (let index = 0; index < msg.items.length; index++) {
                             const item = msg.items[index];
-                            const handler = figma.notify(`Generating PDF #${index}...`);
+                            const handler = figma.notify(`Generating PDF #${index + 1}...`);
                             await delay(0.5);
                             const targetPreviewFrame = await updateLayers(headers, selectedFrame, item);
                             const pdfData = await targetPreviewFrame.exportAsync({ format: 'PDF' });
