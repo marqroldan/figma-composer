@@ -118,20 +118,24 @@ export default {
     },
     generateAll() {
       this.resetError();
-      console.log("generateAll");
-      parent.postMessage(
-        {
-          pluginMessage: {
-            type: "Compose",
-            action: "generateAll",
-            headers: this.headers,
-            items: this.items.filter(
-              (item, index) => this.selected[index] !== false
-            ),
+      const items = this.items.filter((item, index) => this.selected[index]);
+
+      if (items.length) {
+        parent.postMessage(
+          {
+            pluginMessage: {
+              type: "Compose",
+              action: "generateAll",
+              headers: this.headers,
+              items,
+            },
           },
-        },
-        "*"
-      );
+          "*"
+        );
+      } else {
+        this.error = true;
+        this.message = "Please select at least one item";
+      }
     },
     generate(item) {
       this.resetError();
