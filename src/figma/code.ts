@@ -16,51 +16,58 @@ const loadFonts = async (valFontNames: FontName | FontName[]) => {
 }
 
 const updateLayers = async (headers: string[], targetFrame: FrameNode, item: string[]) => {
-    /*
-    for (let headerIndex = 0; headerIndex < headers.length; headerIndex++) {
-    }*/
+    console.log("Update Layers triggering...");
 
-    const targetChildren = targetFrame.findAll((child) => {
-        /*
-        child.name == `%${headers[headerIndex]}%`
-        */
+    const targetChildren = targetFrame.findAll((child) => child.type === 'TEXT') || [] as SceneNode[];
+    const headersObject = headers.reduce((acc, headerItem, index) => {
+        acc[headerItem] = index;
+        return acc;
+    }, {} as { [key: string]: number });
 
-        return child.type === 'TEXT';
-    }) || [] as SceneNode[];
+
     for (let childIndex = 0; childIndex < targetChildren.length; childIndex++) {
         const child = targetChildren[childIndex];
         switch (child.type) {
             case "TEXT": {
                 const nodeStyles = [];
-                console.log("Initial child node characters", child.characters.length, child.characters);
-                for (let headerIndex = 0; headerIndex < headers.length; headerIndex++) {
-                    const headerItem = headers[headerIndex];
-                    const target = `%%${headerItem}%%`;
-                    const startIndex = child.characters.indexOf(target);
-                    const value = item[headerIndex];
+                const search = new RegExp('(\\%\\%([a-zA-Z0-9-_]+)\\%\\%)', 'g');
 
-                    if (startIndex !== -1) {
-                        const fontNames = child.getRangeAllFontNames(0, child.characters.length); /// Only expecting one
-                        await loadFonts(fontNames);
+                let headerMatch: string[] = [];
 
-                        const fontName = child.getRangeFontName(startIndex, startIndex + target.length) as FontName; /// Only expecting one
-                        const fontSize = child.getRangeFontSize(startIndex, startIndex + target.length) as number; /// Only expecting one
+                while ((headerMatch = search.exec(child.characters)) !== null) {
+                    const headerItem = headerMatch[2];
+                    console.log("yay", headerItem);
+                    const headerIndex = headersObject[headerItem];
 
-                        console.log("fonffff", fontName)
-                        await loadFonts(fontName);
 
-                        const nodeStyleObject = {
-                            value,
-                            startIndex,
-                            endIndex: startIndex + value.length,
-                            fontName,
-                            fontSize
-                        };
-                        console.log("Node style for target", target, '- --- -', nodeStyleObject);
-                        nodeStyles.push(nodeStyleObject)
+                    if (headerIndex != null) {
+                        const target = `%%${headerItem}%%`;
+                        const startIndex = child.characters.indexOf(target);
+                        const value = item[headerIndex];
 
-                        console.log("hmmm setting characters font...", fontName)
-                        child.characters = child.characters.replace(target, value);
+                        if (startIndex !== -1) {
+                            const fontNames = child.getRangeAllFontNames(0, child.characters.length); /// Only expecting one
+                            await loadFonts(fontNames);
+
+                            const fontName = child.getRangeFontName(startIndex, startIndex + target.length) as FontName; /// Only expecting one
+                            const fontSize = child.getRangeFontSize(startIndex, startIndex + target.length) as number; /// Only expecting one
+
+                            console.log("fonffff", fontName, fontSize, child.characters.substr(startIndex, startIndex + target.length))
+                            await loadFonts(fontName);
+
+                            const nodeStyleObject = {
+                                value,
+                                startIndex,
+                                endIndex: startIndex + value.length,
+                                fontName,
+                                fontSize
+                            };
+                            console.log("Node style for target", target, '- --- -', nodeStyleObject);
+                            nodeStyles.push(nodeStyleObject)
+
+                            console.log("hmmm setting characters font...", fontName)
+                            child.characters = child.characters.replace(target, value);
+                        }
                     }
                 }
 
@@ -68,7 +75,7 @@ const updateLayers = async (headers: string[], targetFrame: FrameNode, item: str
                 const sortedStyles = nodeStyles.sort((a, b) => (b.startIndex + b.value.length) - (a.startIndex + a.value.length));
                 for (let styleIndex = 0; styleIndex < sortedStyles.length; styleIndex++) {
                     const style = sortedStyles[styleIndex];
-                    console.log("Setting style...", style.startIndex, style.endIndex);
+                    console.log("Setting style... for: ", style.value, style.startIndex, style.endIndex);
                     child.setRangeFontName(style.startIndex, style.endIndex, style.fontName);
                     child.setRangeFontSize(style.startIndex, style.endIndex, style.fontSize);
                 }
