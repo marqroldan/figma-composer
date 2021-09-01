@@ -103,7 +103,7 @@ export default {
               const link = document.createElement("a");
               link.className = "button button--primary";
               link.href = blobURL;
-              link.download = "export.zip";
+              link.download = `${this.$store.state.GSheets.sheetName} Archive.zip`;
               link.click();
             });
             break;
