@@ -46,11 +46,7 @@ const updateLayers = async (headers: string[], selectedFrame: FrameNode, item: s
         const child = targetChildren[childIndex];
         switch (child.type) {
             case "TEXT": {
-                const nodeStyles: {
-                    fontName: FontName,
-                    fontSize: number
-                }[] = [];
-
+                const nodeStyles: ((...args: any[]) => void)[] = [];
 
                 const fontNames = child.getRangeAllFontNames(0, child.characters.length);
                 await loadFonts(fontNames);
@@ -78,24 +74,28 @@ const updateLayers = async (headers: string[], selectedFrame: FrameNode, item: s
 
                 // Obtain styles of every target item
                 findMatches((startIndex, endIndex) => {
-                    const fontName = child.getRangeFontName(startIndex, endIndex) as FontName; /// Only expecting one
-                    const fontSize = child.getRangeFontSize(startIndex, endIndex) as number; /// Only expecting one
-                    nodeStyles.push({
-                        fontName,
-                        fontSize
-                    });
+                    const obj = {
+                        setRangeFontName: child.getRangeFontName(startIndex, endIndex),
+                        setRangeFontSize: child.getRangeFontSize(startIndex, endIndex),
+                        setRangeTextCase: child.getRangeTextCase(startIndex, endIndex),
+                        setRangeTextDecoration: child.getRangeTextDecoration(startIndex, endIndex),
+                        setRangeLetterSpacing: child.getRangeLetterSpacing(startIndex, endIndex),
+                        setRangeLineHeight: child.getRangeLineHeight(startIndex, endIndex),
+                        setRangeTextStyleId: child.getRangeTextStyleId(startIndex, endIndex),
+                    }
+                    nodeStyles.push((sIndex: number, eIndex: number) => {
+                        Object.entries(obj).forEach(([setFunc, value]) => {
+                            //@ts-ignore
+                            child[(setFunc)](sIndex, eIndex, value);
+                        })
+                    })
                 });
 
                 // Replace all target items
                 findMatches((startIndex, insertStart, _, ctr, value) => {
-                    const nodeStyleObject = nodeStyles[ctr];
-
                     child.insertCharacters(insertStart, value, 'AFTER');
                     child.deleteCharacters(startIndex, insertStart)
-
-                    const endIndex = startIndex + value.length;
-                    child.setRangeFontName(startIndex, endIndex, nodeStyleObject.fontName);
-                    child.setRangeFontSize(startIndex, endIndex, nodeStyleObject.fontSize);
+                    nodeStyles[ctr](startIndex, startIndex + value.length);
                 });
 
                 break;
