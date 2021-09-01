@@ -165,6 +165,7 @@ figma.ui.onmessage = async msg => {
                                 const pdfData = await targetPreviewFrame.exportAsync({ format: 'PDF' })
                                 figma.ui.postMessage({ type: 'Compose', action: 'savePDF', data: pdfData, rowNumber: msg.index });
                                 notifyCancel();
+                                isGenerating = false;
                                 return;
                             } catch (e) {
                                 figma.ui.postMessage({ type: 'Compose', action: 'error', message: 'Generate failed' })
@@ -193,6 +194,7 @@ figma.ui.onmessage = async msg => {
                         await notify('Generating Archive...');
                         figma.ui.postMessage({ type: 'Compose', action: 'savePDFArchive', data: pdfItems });
                         notifyCancel();
+                        isGenerating = false;
                         break;
                     }
                 }
