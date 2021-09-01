@@ -5,6 +5,7 @@
       <div class="item" v-for="(item, index) in items" :key="index">
         <div style="flex: 1">
           <Checkbox v-model="selected[index]">
+            <div style="margin-right: 5px">#{{ index + 1 }}</div>
             <div class="fieldValues">
               <span
                 class="fieldValues__item"
