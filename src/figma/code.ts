@@ -16,8 +16,6 @@ const loadFonts = async (valFontNames: FontName | FontName[]) => {
 const createPreviewName = (name: string) => `[Preview] ${name}`;
 
 const updateLayers = async (headers: string[], selectedFrame: FrameNode, item: string[]) => {
-
-
     //// Find if there's a preview frame
     let targetFrame = figma.currentPage.findChild((node) => {
         return node.type === 'FRAME' && node.name === createPreviewName(selectedFrame.name);
@@ -39,19 +37,16 @@ const updateLayers = async (headers: string[], selectedFrame: FrameNode, item: s
         return acc;
     }, {} as { [key: string]: number });
 
-    console.log("item passed", item)
-
-
     for (let childIndex = 0; childIndex < targetChildren.length; childIndex++) {
         const child = targetChildren[childIndex];
         switch (child.type) {
             case "TEXT": {
+                const search = new RegExp('(\\%\\%([a-zA-Z0-9-_]+)\\%\\%)', 'g');
                 const nodeStyles: ((...args: any[]) => void)[] = [];
 
                 const fontNames = child.getRangeAllFontNames(0, child.characters.length);
                 await loadFonts(fontNames);
 
-                const search = new RegExp('(\\%\\%([a-zA-Z0-9-_]+)\\%\\%)', 'g');
 
                 const findMatches = (callback: (startIndex: number, endIndex: number, target: string, ctr: number, value: string) => void) => {
                     let ctr = 0;
