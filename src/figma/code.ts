@@ -1,25 +1,104 @@
 figma.showUI(__html__, { width: 610, height: 480 });
 
 const loadedFonts = {} as { [key: string]: boolean }
+const loadFonts = async (valFontNames: FontName | FontName[]) => {
+    const fontNames = Array.isArray(valFontNames) ? valFontNames : [valFontNames];
+    for (let fontNameIndex = 0; fontNameIndex < fontNames.length; fontNameIndex++) {
+        const fontName = fontNames[fontNameIndex];
+        if (!loadedFonts[`${fontName.family}${fontName.style}`]) {
+            await figma.loadFontAsync(fontName);
+            loadedFonts[`${fontName.family}${fontName.style}`] = true;
+        }
+    }
 
-const updateLayers = async (headers: string[], targetFrame: FrameNode, item: string[]) => {
-    for (let headerIndex = 0; headerIndex < headers.length; headerIndex++) {
-        const targetChildren = targetFrame.findAll((child) => child.name == `%${headers[headerIndex]}%`) || [] as SceneNode[];
-        for (let childIndex = 0; childIndex < targetChildren.length; childIndex++) {
-            const child = targetChildren[childIndex];
-            switch (child.type) {
-                case "TEXT": {
-                    const fontName = child.fontName as FontName;
-                    if (!loadedFonts[`${fontName.family}${fontName.style}`]) {
-                        await figma.loadFontAsync(fontName);
-                        loadedFonts[`${fontName.family}${fontName.style}`] = true;
+}
+
+const createPreviewName = (name: string) => `[Preview] ${name}`;
+
+const updateLayers = async (headers: string[], selectedFrame: FrameNode, item: string[]) => {
+    //// Find if there's a preview frame
+    let targetFrame = figma.currentPage.findChild((node) => {
+        return node.type === 'FRAME' && node.name === createPreviewName(selectedFrame.name);
+    }) as FrameNode;
+
+    //// Clone the frame for preview
+    if (targetFrame != null) {
+        targetFrame.remove();
+    }
+
+    targetFrame = selectedFrame.clone();
+    targetFrame.name = createPreviewName(selectedFrame.name);
+    targetFrame.x = targetFrame.x + 100 + selectedFrame.width;
+    figma.currentPage.appendChild(targetFrame);
+
+    const targetChildren = targetFrame.findAll((child) => child.type === 'TEXT') || [] as SceneNode[];
+    const headersObject = headers.reduce((acc, headerItem, index) => {
+        acc[headerItem] = index;
+        return acc;
+    }, {} as { [key: string]: number });
+
+    for (let childIndex = 0; childIndex < targetChildren.length; childIndex++) {
+        const child = targetChildren[childIndex];
+        switch (child.type) {
+            case "TEXT": {
+                const search = new RegExp('(\\%\\%([a-zA-Z0-9-_]+)\\%\\%)', 'g');
+                const nodeStyles: ((...args: any[]) => void)[] = [];
+
+                const fontNames = child.getRangeAllFontNames(0, child.characters.length);
+                await loadFonts(fontNames);
+
+
+                const findMatches = (callback: (startIndex: number, endIndex: number, target: string, ctr: number, value: string) => void) => {
+                    let ctr = 0;
+                    let headerMatch: RegExpExecArray;
+                    const jsonText = JSON.stringify(child.characters);
+                    while ((headerMatch = search.exec(jsonText)) !== null) {
+                        const headerItem = headerMatch[2];
+                        const headerIndex = headersObject[headerItem];
+                        if (headerIndex != null) {
+                            const target = `%%${headerItem}%%`;
+                            const startIndex = child.characters.indexOf(target);
+
+                            if (startIndex !== -1) {
+                                callback(startIndex, startIndex + target.length, target, ctr, item[headerIndex]);
+                                ctr++;
+                            }
+                        }
                     }
-                    child.characters = item[childIndex];
-                    break;
                 }
+
+                // Obtain styles of every target item
+                findMatches((startIndex, endIndex) => {
+                    const obj = {
+                        setRangeFontName: child.getRangeFontName(startIndex, endIndex),
+                        setRangeFontSize: child.getRangeFontSize(startIndex, endIndex),
+                        setRangeTextCase: child.getRangeTextCase(startIndex, endIndex),
+                        setRangeTextDecoration: child.getRangeTextDecoration(startIndex, endIndex),
+                        setRangeLetterSpacing: child.getRangeLetterSpacing(startIndex, endIndex),
+                        setRangeLineHeight: child.getRangeLineHeight(startIndex, endIndex),
+                        setRangeTextStyleId: child.getRangeTextStyleId(startIndex, endIndex),
+                    }
+                    nodeStyles.push((sIndex: number, eIndex: number) => {
+                        Object.entries(obj).forEach(([setFunc, value]) => {
+                            //@ts-ignore
+                            child[(setFunc)](sIndex, eIndex, value);
+                        })
+                    })
+                });
+
+                // Replace all target items
+                findMatches((startIndex, insertStart, _, ctr, value) => {
+                    child.insertCharacters(insertStart, value, 'AFTER');
+                    child.deleteCharacters(startIndex, insertStart)
+                    nodeStyles[ctr](startIndex, startIndex + value.length);
+                });
+
+                break;
             }
         }
     }
+
+    return targetFrame;
 }
 
 figma.ui.onmessage = async msg => {
@@ -49,25 +128,11 @@ figma.ui.onmessage = async msg => {
                     figma.ui.postMessage({ type: 'Compose', action: 'error', message: 'Frame selected cannot start with [Preview]' })
                     return;
                 }
-                const createPreviewName = (name: string) => `[Preview] ${name}`;
-                //// Find if there's a preview frame
-                let targetPreviewFrame = figma.currentPage.findChild((node) => {
-                    return node.type === 'FRAME' && node.name === createPreviewName(selectedFrame.name);
-                }) as FrameNode;
-
-                //// Clone the frame for preview
-                if (targetPreviewFrame == null) {
-                    targetPreviewFrame = selectedFrame.clone();
-                    targetPreviewFrame.name = createPreviewName(selectedFrame.name);
-                    targetPreviewFrame.x = targetPreviewFrame.x + 100 + selectedFrame.width;
-                    figma.currentPage.appendChild(targetPreviewFrame);
-                }
-
 
                 switch (msg.action) {
                     case 'generate':
                     case 'preview': {
-                        await updateLayers(headers, targetPreviewFrame, msg.item);
+                        const targetPreviewFrame = await updateLayers(headers, selectedFrame, msg.item);
 
                         if (msg.action === 'generate') {
                             try {
@@ -89,7 +154,7 @@ figma.ui.onmessage = async msg => {
 
                         for (let index = 0; index < msg.items.length; index++) {
                             const item = msg.items[index];
-                            await updateLayers(headers, targetPreviewFrame, item);
+                            const targetPreviewFrame = await updateLayers(headers, selectedFrame, item);
                             const handler = figma.notify(`Generating PDF #${index}...`);
                             const pdfData = await targetPreviewFrame.exportAsync({ format: 'PDF' });
                             pdfItems.push({
