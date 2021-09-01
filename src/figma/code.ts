@@ -1,5 +1,11 @@
 figma.showUI(__html__, { width: 610, height: 480 });
 
+const delay = (seconds: number) => {
+    return new Promise((resolve, reject) => {
+        setTimeout(resolve, seconds * 1000);
+    })
+}
+
 const loadedFonts = {} as { [key: string]: boolean }
 const loadFonts = async (valFontNames: FontName | FontName[]) => {
     const fontNames = Array.isArray(valFontNames) ? valFontNames : [valFontNames];
@@ -137,6 +143,7 @@ figma.ui.onmessage = async msg => {
                         if (msg.action === 'generate') {
                             try {
                                 const handler = figma.notify('Generating PDF...');
+                                await delay(0.5);
                                 const pdfData = await targetPreviewFrame.exportAsync({ format: 'PDF' })
                                 figma.ui.postMessage({ type: 'Compose', action: 'savePDF', data: pdfData });
                                 handler.cancel();
@@ -154,8 +161,9 @@ figma.ui.onmessage = async msg => {
 
                         for (let index = 0; index < msg.items.length; index++) {
                             const item = msg.items[index];
-                            const targetPreviewFrame = await updateLayers(headers, selectedFrame, item);
                             const handler = figma.notify(`Generating PDF #${index}...`);
+                            await delay(0.5);
+                            const targetPreviewFrame = await updateLayers(headers, selectedFrame, item);
                             const pdfData = await targetPreviewFrame.exportAsync({ format: 'PDF' });
                             pdfItems.push({
                                 name: `${index} - ${headers[0]}${item[0]}.pdf`,
