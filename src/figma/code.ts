@@ -15,8 +15,25 @@ const loadFonts = async (valFontNames: FontName | FontName[]) => {
 
 }
 
-const updateLayers = async (headers: string[], targetFrame: FrameNode, item: string[]) => {
-    console.log("Update Layers triggering...");
+const createPreviewName = (name: string) => `[Preview] ${name}`;
+
+const updateLayers = async (headers: string[], selectedFrame: FrameNode, item: string[]) => {
+
+
+    //// Find if there's a preview frame
+    let targetFrame = figma.currentPage.findChild((node) => {
+        return node.type === 'FRAME' && node.name === createPreviewName(selectedFrame.name);
+    }) as FrameNode;
+
+    //// Clone the frame for preview
+    if (targetFrame != null) {
+        targetFrame.remove();
+    }
+
+    targetFrame = selectedFrame.clone();
+    targetFrame.name = createPreviewName(selectedFrame.name);
+    targetFrame.x = targetFrame.x + 100 + selectedFrame.width;
+    figma.currentPage.appendChild(targetFrame);
 
     const targetChildren = targetFrame.findAll((child) => child.type === 'TEXT') || [] as SceneNode[];
     const headersObject = headers.reduce((acc, headerItem, index) => {
@@ -84,6 +101,8 @@ const updateLayers = async (headers: string[], targetFrame: FrameNode, item: str
             }
         }
     }
+
+    return targetFrame;
 }
 
 figma.ui.onmessage = async msg => {
@@ -113,27 +132,11 @@ figma.ui.onmessage = async msg => {
                     figma.ui.postMessage({ type: 'Compose', action: 'error', message: 'Frame selected cannot start with [Preview]' })
                     return;
                 }
-                const createPreviewName = (name: string) => `[Preview] ${name}`;
-                //// Find if there's a preview frame
-                let targetPreviewFrame = figma.currentPage.findChild((node) => {
-                    return node.type === 'FRAME' && node.name === createPreviewName(selectedFrame.name);
-                }) as FrameNode;
-
-                //// Clone the frame for preview
-                if (targetPreviewFrame != null) {
-                    targetPreviewFrame.remove();
-                }
-
-                targetPreviewFrame = selectedFrame.clone();
-                targetPreviewFrame.name = createPreviewName(selectedFrame.name);
-                targetPreviewFrame.x = targetPreviewFrame.x + 100 + selectedFrame.width;
-                figma.currentPage.appendChild(targetPreviewFrame);
-
 
                 switch (msg.action) {
                     case 'generate':
                     case 'preview': {
-                        await updateLayers(headers, targetPreviewFrame, msg.item);
+                        const targetPreviewFrame = await updateLayers(headers, selectedFrame, msg.item);
 
                         if (msg.action === 'generate') {
                             try {
@@ -155,7 +158,7 @@ figma.ui.onmessage = async msg => {
 
                         for (let index = 0; index < msg.items.length; index++) {
                             const item = msg.items[index];
-                            await updateLayers(headers, targetPreviewFrame, item);
+                            const targetPreviewFrame = await updateLayers(headers, selectedFrame, item);
                             const handler = figma.notify(`Generating PDF #${index}...`);
                             const pdfData = await targetPreviewFrame.exportAsync({ format: 'PDF' });
                             pdfItems.push({
