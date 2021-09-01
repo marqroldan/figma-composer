@@ -120,12 +120,14 @@ figma.ui.onmessage = async msg => {
                 }) as FrameNode;
 
                 //// Clone the frame for preview
-                if (targetPreviewFrame == null) {
-                    targetPreviewFrame = selectedFrame.clone();
-                    targetPreviewFrame.name = createPreviewName(selectedFrame.name);
-                    targetPreviewFrame.x = targetPreviewFrame.x + 100 + selectedFrame.width;
-                    figma.currentPage.appendChild(targetPreviewFrame);
+                if (targetPreviewFrame != null) {
+                    targetPreviewFrame.remove();
                 }
+
+                targetPreviewFrame = selectedFrame.clone();
+                targetPreviewFrame.name = createPreviewName(selectedFrame.name);
+                targetPreviewFrame.x = targetPreviewFrame.x + 100 + selectedFrame.width;
+                figma.currentPage.appendChild(targetPreviewFrame);
 
 
                 switch (msg.action) {
