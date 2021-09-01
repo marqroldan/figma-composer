@@ -6,9 +6,7 @@ const loadFonts = async (valFontNames: FontName | FontName[]) => {
     for (let fontNameIndex = 0; fontNameIndex < fontNames.length; fontNameIndex++) {
         const fontName = fontNames[fontNameIndex];
         if (!loadedFonts[`${fontName.family}${fontName.style}`]) {
-            console.log("hmmm loading font...", fontName)
             await figma.loadFontAsync(fontName);
-            console.log("hmmm font loaded", fontName)
             loadedFonts[`${fontName.family}${fontName.style}`] = true;
         }
     }
@@ -41,61 +39,64 @@ const updateLayers = async (headers: string[], selectedFrame: FrameNode, item: s
         return acc;
     }, {} as { [key: string]: number });
 
+    console.log("item passed", item)
+
 
     for (let childIndex = 0; childIndex < targetChildren.length; childIndex++) {
         const child = targetChildren[childIndex];
         switch (child.type) {
             case "TEXT": {
-                const nodeStyles = [];
+                const nodeStyles: {
+                    fontName: FontName,
+                    fontSize: number
+                }[] = [];
+
+
+                const fontNames = child.getRangeAllFontNames(0, child.characters.length);
+                await loadFonts(fontNames);
+
                 const search = new RegExp('(\\%\\%([a-zA-Z0-9-_]+)\\%\\%)', 'g');
 
-                let headerMatch: string[] = [];
+                const findMatches = (callback: (startIndex: number, endIndex: number, target: string, ctr: number, value: string) => void) => {
+                    let ctr = 0;
+                    let headerMatch: RegExpExecArray;
+                    const jsonText = JSON.stringify(child.characters);
+                    while ((headerMatch = search.exec(jsonText)) !== null) {
+                        const headerItem = headerMatch[2];
+                        const headerIndex = headersObject[headerItem];
+                        if (headerIndex != null) {
+                            const target = `%%${headerItem}%%`;
+                            const startIndex = child.characters.indexOf(target);
 
-                while ((headerMatch = search.exec(child.characters)) !== null) {
-                    const headerItem = headerMatch[2];
-                    console.log("yay", headerItem);
-                    const headerIndex = headersObject[headerItem];
-
-
-                    if (headerIndex != null) {
-                        const target = `%%${headerItem}%%`;
-                        const startIndex = child.characters.indexOf(target);
-                        const value = item[headerIndex];
-
-                        if (startIndex !== -1) {
-                            const fontNames = child.getRangeAllFontNames(0, child.characters.length); /// Only expecting one
-                            await loadFonts(fontNames);
-
-                            const fontName = child.getRangeFontName(startIndex, startIndex + target.length) as FontName; /// Only expecting one
-                            const fontSize = child.getRangeFontSize(startIndex, startIndex + target.length) as number; /// Only expecting one
-
-                            console.log("fonffff", fontName, fontSize, child.characters.substr(startIndex, startIndex + target.length))
-                            await loadFonts(fontName);
-
-                            const nodeStyleObject = {
-                                value,
-                                startIndex,
-                                endIndex: startIndex + value.length,
-                                fontName,
-                                fontSize
-                            };
-                            console.log("Node style for target", target, '- --- -', nodeStyleObject);
-                            nodeStyles.push(nodeStyleObject)
-
-                            console.log("hmmm setting characters font...", fontName)
-                            child.characters = child.characters.replace(target, value);
+                            if (startIndex !== -1) {
+                                callback(startIndex, startIndex + target.length, target, ctr, item[headerIndex]);
+                                ctr++;
+                            }
                         }
                     }
                 }
 
-                console.log("Final child node characters", child.characters.length, child.characters);
-                const sortedStyles = nodeStyles.sort((a, b) => (b.startIndex + b.value.length) - (a.startIndex + a.value.length));
-                for (let styleIndex = 0; styleIndex < sortedStyles.length; styleIndex++) {
-                    const style = sortedStyles[styleIndex];
-                    console.log("Setting style... for: ", style.value, style.startIndex, style.endIndex);
-                    child.setRangeFontName(style.startIndex, style.endIndex, style.fontName);
-                    child.setRangeFontSize(style.startIndex, style.endIndex, style.fontSize);
-                }
+                // Obtain styles of every target item
+                findMatches((startIndex, endIndex) => {
+                    const fontName = child.getRangeFontName(startIndex, endIndex) as FontName; /// Only expecting one
+                    const fontSize = child.getRangeFontSize(startIndex, endIndex) as number; /// Only expecting one
+                    nodeStyles.push({
+                        fontName,
+                        fontSize
+                    });
+                });
+
+                // Replace all target items
+                findMatches((startIndex, insertStart, _, ctr, value) => {
+                    const nodeStyleObject = nodeStyles[ctr];
+
+                    child.insertCharacters(insertStart, value, 'AFTER');
+                    child.deleteCharacters(startIndex, insertStart)
+
+                    const endIndex = startIndex + value.length;
+                    child.setRangeFontName(startIndex, endIndex, nodeStyleObject.fontName);
+                    child.setRangeFontSize(startIndex, endIndex, nodeStyleObject.fontSize);
+                });
 
                 break;
             }
