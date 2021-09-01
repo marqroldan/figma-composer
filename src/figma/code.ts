@@ -163,7 +163,7 @@ figma.ui.onmessage = async msg => {
                             try {
                                 await notify('Generating PDF...');
                                 const pdfData = await targetPreviewFrame.exportAsync({ format: 'PDF' })
-                                figma.ui.postMessage({ type: 'Compose', action: 'savePDF', data: pdfData });
+                                figma.ui.postMessage({ type: 'Compose', action: 'savePDF', data: pdfData, rowNumber: msg.index });
                                 notifyCancel();
                                 return;
                             } catch (e) {
